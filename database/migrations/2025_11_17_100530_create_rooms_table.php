@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('profiles', function (Blueprint $table) {
+        Schema::create('rooms', function (Blueprint $table) {
+            $table->id();
             $table->unsignedBigInteger("user_id");
-            $table->string("first_name",32);
-            $table->string("middle_name",32)->nullable();
-            $table->string("last_name",32);
-            $table->string("contact_number",15);
+            $table->string("number")->unique();
+            $table->enum("type", ["single", "double","Deluxe", "VIP", "suite"]);
+            $table->string("floor");
+            $table->enum("status", ["available", "occupied", "maintenance"])->default("available");
+            $table->text("extension")->nullable();
             $table->timestamps();
 
             $table->foreign("user_id")->references("id")->on("users")->onDelete("cascade");
@@ -28,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('profiles');
+        Schema::dropIfExists('rooms');
     }
 };

@@ -12,6 +12,10 @@ class UserController extends Controller
             "name" => "required|string|unique:users,name",
             "email" => "required|string|email|unique:users,email",
             "password" => "required|string|confirmed|min:6",
+            "first_name" => "required|string|min:2|max:32",
+            "middle_name" => "sometimes|string|min:2|max:32",
+            "last_name" => "reqiured|string|min:2|max:32",
+            "contact_number" => "required|string|max:15",
         ]);
 
         if($validator->fails()){
@@ -21,84 +25,25 @@ class UserController extends Controller
                 "errors" => $validator->errors()
             ],400);
         }
-        $inputs = $validator->safe()->only(["name","email","password"]);
-        $user = User::create([$inputs]);
+
+        $user_inputs = $validator->safe()->only(["name","email","password","role"]);
+        $profile_inputs = $validator->safe()->except(["name","email","password", "role"]);
+
+        $user = User::create([$user_inputs]);
+        $user->profile()->create($profile_inputs);
+
         return response()->json([
             "ok" => true,
-            "message" => "User created successfully!",
+            "message" => "User registered successfully!",
             "data" => $user
         ],201);
     }
 
-    public function index() {
-        $users = User::all();
-        return response()->json([
-            "ok" => true,
-            "message" => "Users retrieved successfully!",
-            "data" => $users
-        ],200);
-    }
-
-    public function show($id) {
-        $user = User::find($id);
-        if(!$user){
-            return response()->json([
-                "ok" => false,
-                "message" => "User not found"
-            ],404);
-        }
+    public function index(){
         return response()->json([
             "ok" => true,
             "message" => "User retrieved successfully!",
-            "data" => $user
-        ],200);
-    }
-
-    public function update(Request $request, $id) {
-        $user = User::find($id);
-        if(!$user){
-            return response()->json([
-                "ok" => false,
-                "message" => "User not found"
-            ],404);
-        }
-
-        $validator = validator::make($request->all(),[
-            "name" => "sometimes|string|unique:users,name,".$id,
-            "email" => "sometimes|string|email|unique:users,email,".$id,
-            "password" => "sometimes|string|confirmed|min:6",
-        ]);
-
-        if($validator->fails()){
-            return response()->json([
-                "ok" => false,
-                "message" => "Validation errors",
-                "errors" => $validator->errors()
-            ],400);
-        }
-
-        $inputs = $validator->safe()->only(["name","email","password"]);
-        $user->update($inputs);
-
-        return response()->json([
-            "ok" => true,
-            "message" => "User updated successfully!",
-            "data" => $user
-        ],200);
-    }
-
-    public function destroy($id) {
-        $user = User::find($id);
-        if(!$user){
-            return response()->json([
-                "ok" => false,
-                "message" => "User not found"
-            ],404);
-        }
-        $user->delete();
-        return response()->json([
-            "ok" => true,
-            "message" => "User deleted successfully!"
+            "data" => User::with("profile")->get()
         ],200);
     }
 }
